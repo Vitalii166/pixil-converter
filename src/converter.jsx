@@ -660,7 +660,7 @@ const Converter = () => {
     const realType = getFileType(selectedFile);
 
     if (realType !== inputType) {
-      setError(`Please select a valid ${inputType.toUpperCase()} file`);
+      setError(`please select a valid ${inputType} file`);
       setFile(null);
       setResult(null);
       return;
