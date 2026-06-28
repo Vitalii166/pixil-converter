@@ -608,9 +608,7 @@ const writePsdFile = (doc) => {
     })),
   };
 
-  const bytes = agPsd.writePsdBuffer
-    ? agPsd.writePsdBuffer(psd, { useImageData: true })
-    : agPsd.writePsd(psd, { useImageData: true });
+  const bytes = agPsd.writePsd(psd, { useImageData: true });
 
   return new Blob([bytes], { type: 'application/octet-stream' });
 };
