@@ -3,9 +3,9 @@ import * as agPsd from 'ag-psd';
 import "./index.css";
 
 const fileTypes = [
-  { value: 'pixil', label: 'PIXIL' },
-  { value: 'ase', label: 'ASE / ASEPRITE' },
-  { value: 'psd', label: 'PSD' },
+  { value: 'pixil', label: 'pixil' },
+  { value: 'ase', label: 'ase/aseprite' },
+  { value: 'psd', label: 'psd' },
 ];
 
 const textEncoder = new TextEncoder();
@@ -212,7 +212,7 @@ const readPixil = async (file) => {
   const frame = pixil.frames?.[pixil.currentFrame || 0] || pixil.frames?.[0];
 
   if (!width || !height || !frame?.layers?.length) {
-    throw new Error('This Pixil file does not contain readable layers.');
+    throw new Error('this pixil file does not contain readable layers');
   }
 
   const layers = await Promise.all(frame.layers.map(async (layer, index) => ({
@@ -294,7 +294,7 @@ const writePixil = (doc) => {
 
 const inflateDeflate = async (bytes) => {
   if (!globalThis.DecompressionStream) {
-    throw new Error('Compressed Aseprite files need a newer browser.');
+    throw new Error('compressed aseprite files need a newer browser');
   }
 
   const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
@@ -365,14 +365,14 @@ const readAseprite = async (file) => {
   const reader = new Reader(await file.arrayBuffer());
 
   reader.u32();
-  if (reader.u16() !== 0xa5e0) throw new Error('Not an Aseprite file.');
+  if (reader.u16() !== 0xa5e0) throw new Error('not an aseprite file');
 
   const frameCount = reader.u16();
   const width = reader.u16();
   const height = reader.u16();
   const colorDepth = reader.u16();
 
-  if (colorDepth !== 32) throw new Error('Only RGBA Aseprite files are supported.');
+  if (colorDepth !== 32) throw new Error('only rgba aseprite files are supported');
 
   reader.pos = 128;
 
@@ -383,7 +383,7 @@ const readAseprite = async (file) => {
     const frameStart = reader.pos;
     const frameBytes = reader.u32();
 
-    if (reader.u16() !== 0xf1fa) throw new Error('Invalid Aseprite frame.');
+    if (reader.u16() !== 0xf1fa) throw new Error('invalid aseprite frame');
 
     const oldChunkCount = reader.u16();
     reader.skip(4);
@@ -455,7 +455,7 @@ const readAseprite = async (file) => {
     };
   });
 
-  if (!layers.length) throw new Error('No readable Aseprite layers found.');
+  if (!layers.length) throw new Error('no readable aseprite layers found');
 
   return normalizeDoc({
     name: file.name.replace(/\.[^.]+$/, ''),
@@ -585,7 +585,7 @@ const readPsdFile = async (file) => {
     });
   }
 
-  if (!layers.length) throw new Error('No readable PSD layers found.');
+  if (!layers.length) throw new Error('no readable psd layers found');
 
   return normalizeDoc({
     name: file.name.replace(/\.[^.]+$/, ''),
@@ -624,7 +624,7 @@ const readDocument = async (file) => {
   if (type === 'ase') return readAseprite(file);
   if (type === 'psd') return readPsdFile(file);
 
-  throw new Error('Please select a PIXIL, ASE/ASEPRITE, or PSD file.');
+  throw new Error('select an ase/aseprite, pixil, or psd file');
 };
 
 const writeDocument = (doc, outputType) => {
@@ -632,7 +632,7 @@ const writeDocument = (doc, outputType) => {
   if (outputType === 'ase') return writeAseprite(doc);
   if (outputType === 'psd') return writePsdFile(doc);
 
-  throw new Error('Please choose an output file type.');
+  throw new Error('choose an output file type');
 };
 
 const Converter = () => {
@@ -768,7 +768,7 @@ const Converter = () => {
         {result && (
           <div className="space-y-3">
             <div className="bg-green-100 border border-green-300 p-3 rounded text-sm">
-              <p className="font-semibold mb-2">Success!</p>
+              <p className="font-semibold mb-2">success</p>
               <p>{result.width}×{result.height}px, {result.layerCount} layers</p>
             </div>
 
@@ -776,7 +776,7 @@ const Converter = () => {
               onClick={downloadFile}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mr-2 border-0 cursor-pointer font-medium"
             >
-              Download
+              download
             </button>
 
             <button
@@ -786,7 +786,7 @@ const Converter = () => {
               }}
               className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded border-0 cursor-pointer font-medium"
             >
-              Convert Another
+              convert another
             </button>
           </div>
         )}
