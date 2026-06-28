@@ -365,25 +365,26 @@ const readAseprite = async (file) => {
   const reader = new Reader(await file.arrayBuffer());
 
   reader.u32();
-  if (reader.u16() !== 0xa5e0) throw new Error('not an aseprite file');
+  if (reader.u16() !== 0xa5e0) throw new Error('Not an Aseprite file.');
 
   const frameCount = reader.u16();
   const width = reader.u16();
   const height = reader.u16();
   const colorDepth = reader.u16();
 
-  if (colorDepth !== 32) throw new Error('only rgba aseprite files are supported');
+  if (colorDepth !== 32) throw new Error('Only RGBA Aseprite files are supported.');
 
   reader.pos = 128;
 
   const layerDefs = [];
   const cels = [];
+  let aseLayerIndex = 0;
 
   for (let frame = 0; frame < frameCount; frame++) {
     const frameStart = reader.pos;
     const frameBytes = reader.u32();
 
-    if (reader.u16() !== 0xf1fa) throw new Error('invalid aseprite frame');
+    if (reader.u16() !== 0xf1fa) throw new Error('Invalid Aseprite frame.');
 
     const oldChunkCount = reader.u16();
     reader.skip(4);
@@ -408,12 +409,15 @@ const readAseprite = async (file) => {
 
         if (layerType === 0) {
           layerDefs.push({
+            aseLayerIndex,
             name,
             visible: Boolean(flags & 1),
             blendMode: aseBlendToCanvas[blendMode] || 'source-over',
             opacity: opacity / 255,
           });
         }
+
+        aseLayerIndex += 1;
       }
 
       if (chunkType === 0x2005) {
@@ -443,11 +447,13 @@ const readAseprite = async (file) => {
     break;
   }
 
-  const layers = layerDefs.map((layer, index) => {
-    const cel = cels.find((item) => item.layerIndex === index);
+  const layers = layerDefs.map((layer) => {
+    const cel = cels.find((item) => item.layerIndex === layer.aseLayerIndex);
 
     return {
-      ...layer,
+      name: layer.name,
+      visible: layer.visible,
+      blendMode: layer.blendMode,
       opacity: cel ? Math.min(layer.opacity, cel.opacity) : layer.opacity,
       imageData: cel
         ? layerToFullCanvas(width, height, cel.raw, cel.x, cel.y, cel.celWidth, cel.celHeight)
@@ -455,7 +461,7 @@ const readAseprite = async (file) => {
     };
   });
 
-  if (!layers.length) throw new Error('no readable aseprite layers found');
+  if (!layers.length) throw new Error('No readable Aseprite image layers found.');
 
   return normalizeDoc({
     name: file.name.replace(/\.[^.]+$/, ''),
