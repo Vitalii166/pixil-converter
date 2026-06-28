@@ -80,7 +80,11 @@ class Writer {
 
   get length() { return this.bytes.length; }
 
-  raw(data) { this.bytes.push(...data); }
+  raw(data) {
+  for (let i = 0; i < data.length; i++) {
+      this.bytes.push(data[i]);
+    }
+  }
   u8(v) { this.bytes.push(v & 255); }
 
   i16(v) {
