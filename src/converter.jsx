@@ -234,46 +234,46 @@ const readPixil = async (file) => {
     imageData: await dataUrlToImageData(layer.src, width, height),
   })));
 
-  const readImageFile = async (file) => {
-    const src = URL.createObjectURL(file);
-
-    try {
-      const image = await new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error('could not read image file'));
-        img.src = src;
-      });
-
-      const canvas = document.createElement('canvas');
-      canvas.width = image.naturalWidth || image.width;
-      canvas.height = image.naturalHeight || image.height;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(image, 0, 0);
-
-      return normalizeDoc({
-        name: file.name.replace(/\.[^.]+$/, ''),
-        width: canvas.width,
-        height: canvas.height,
-        layers: [{
-          name: file.name.replace(/\.[^.]+$/, '') || 'image',
-          visible: true,
-          opacity: 1,
-          blendMode: 'source-over',
-          imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
-        }],
-      });
-    } finally {
-      URL.revokeObjectURL(src);
-    }
-  };
-
   return normalizeDoc({
     name: pixil.name || file.name.replace(/\.[^.]+$/, ''),
     width,
     height,
     layers,
   });
+};
+
+const readImageFile = async (file) => {
+  const src = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('could not read image file'));
+      img.src = src;
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth || image.width;
+    canvas.height = image.naturalHeight || image.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0);
+
+    return normalizeDoc({
+      name: file.name.replace(/\.[^.]+$/, ''),
+      width: canvas.width,
+      height: canvas.height,
+      layers: [{
+        name: file.name.replace(/\.[^.]+$/, '') || 'image',
+        visible: true,
+        opacity: 1,
+        blendMode: 'source-over',
+        imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+      }],
+    });
+  } finally {
+    URL.revokeObjectURL(src);
+  }
 };
 
 const writePixil = (doc) => {
