@@ -8,6 +8,13 @@ const fileTypes = [
   { value: 'psd', label: 'psd' },
 ];
 
+const inputFileTypes = [
+  { value: 'image', label: 'image' },
+  ...fileTypes,
+];
+
+const imageExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'svg'];
+
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
@@ -181,9 +188,13 @@ const extensionFor = (type) => type === 'ase' ? 'aseprite' : type;
 
 const getFileType = (file) => {
   const name = file.name.toLowerCase();
+  const extension = name.split('.').pop();
+
+  if (file.type.startsWith('image/') || imageExtensions.includes(extension)) return 'image';
   if (name.endsWith('.pixil')) return 'pixil';
   if (name.endsWith('.psd')) return 'psd';
   if (name.endsWith('.ase') || name.endsWith('.aseprite')) return 'ase';
+
   return null;
 };
 
@@ -222,6 +233,40 @@ const readPixil = async (file) => {
     blendMode: layer.options?.blend || 'source-over',
     imageData: await dataUrlToImageData(layer.src, width, height),
   })));
+
+  const readImageFile = async (file) => {
+    const src = URL.createObjectURL(file);
+
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('could not read image file'));
+        img.src = src;
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth || image.width;
+      canvas.height = image.naturalHeight || image.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(image, 0, 0);
+
+      return normalizeDoc({
+        name: file.name.replace(/\.[^.]+$/, ''),
+        width: canvas.width,
+        height: canvas.height,
+        layers: [{
+          name: file.name.replace(/\.[^.]+$/, '') || 'image',
+          visible: true,
+          opacity: 1,
+          blendMode: 'source-over',
+          imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+        }],
+      });
+    } finally {
+      URL.revokeObjectURL(src);
+    }
+  };
 
   return normalizeDoc({
     name: pixil.name || file.name.replace(/\.[^.]+$/, ''),
@@ -626,11 +671,12 @@ const writePsdFile = (doc) => {
 const readDocument = async (file) => {
   const type = getFileType(file);
 
+  if (type === 'image') return readImageFile(file);
   if (type === 'pixil') return readPixil(file);
   if (type === 'ase') return readAseprite(file);
   if (type === 'psd') return readPsdFile(file);
 
-  throw new Error('select an ase/aseprite, pixil, or psd file');
+  throw new Error('select an image, ase/aseprite, pixil, or psd file');
 };
 
 const writeDocument = (doc, outputType) => {
@@ -643,7 +689,7 @@ const writeDocument = (doc, outputType) => {
 
 const Converter = () => {
   const [file, setFile] = useState(null);
-  const [inputType, setInputType] = useState('pixil');
+  const [inputType, setInputType] = useState('image');
   const [outputType, setOutputType] = useState('ase');
   const [converting, setConverting] = useState(false);
   const [result, setResult] = useState(null);
@@ -726,7 +772,7 @@ const Converter = () => {
               }}
               className="block w-full text-sm border border-gray-300 rounded p-2"
             >
-              {fileTypes.map((type) => (
+              {inputFileTypes.map((type) => (
                 <option key={type.value} value={type.value}>{type.label}</option>
               ))}
             </select>
@@ -748,7 +794,7 @@ const Converter = () => {
 
           <input
             type="file"
-            accept=".pixil,.ase,.aseprite,.psd"
+            accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,.svg,.pixil,.ase,.aseprite,.psd,image/*"
             onChange={handleFileChange}
             className="block w-full text-sm border border-gray-300 rounded p-2"
           />
